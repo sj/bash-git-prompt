@@ -1,0 +1,9 @@
+Bashrc-git is a simple extension to Bash that shows useful information about
+the Git repository in your current directory.
+
+It consists of a single file (bashrc-git) which should be included in your
+$HOME/.bashrc file. Suppose 'bashrc-git' is installed to
+/home/bas/bashrc-git/bashrc-git, then edit /home/bas/.bashrc and add the
+following at the very end:
+
+source ~/bashrc-git/bashrc-git

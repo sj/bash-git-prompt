@@ -1,0 +1,53 @@
+
+# Git branch in prompt
+function parse_git_info {
+	git_branch=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
+	if [ ! "$git_branch" = "" ]; then
+		if [ ! "$git_branch" = "(no branch)" ]; then
+			if [ ! "`git for-each-ref --format='%(upstream:short)' $(git symbolic-ref -q HEAD)`" = "" ]; then
+				# Local branch has upstream
+				git_num_commits_not_pushed=`git log --oneline @{upstream}.. | wc -l` 
+				if [ "$git_num_commits_not_pushed" -gt "0" ]; then
+					commits_not_pushed_str=" ↑$git_num_commits_not_pushed"
+				fi	
+			else
+				# Local branch does not have upstream
+				git_num_commits_not_pushed=`git show-branch "$git_branch" | wc -l`
+				if [ "$git_num_commits_not_pushed" -gt "0" ]; then
+					commits_not_pushed_str=" ↑$git_num_commits_not_pushed!"
+				fi	
+			fi
+			git_num_changes_uncommitted=`git status --porcelain | wc -l`
+			if [ "$git_num_changes_uncommitted" -gt "0" ]; then
+				num_changes_str=" ~$git_num_changes_uncommitted"
+			fi
+		fi # else: no branch info available (e.g. when rebasing)
+		echo " [$git_branch$commits_not_pushed_str$num_changes_str] "
+	fi
+}
+
+function proml {
+	local        BLUE="\[\033[0;34m\]"
+	local         RED="\[\033[0;31m\]"
+	local   LIGHT_RED="\[\033[1;31m\]"
+	local       GREEN="\[\033[0;32m\]"
+	local LIGHT_GREEN="\[\033[1;32m\]"
+	local       WHITE="\[\033[1;37m\]"
+	local  LIGHT_GRAY="\[\033[0;37m\]"
+
+	case $TERM in
+		xterm*)
+			TITLEBAR='\[\033]0;\u@\h:\w\007\]'
+			;;
+		*)
+			TITLEBAR=""
+			;;
+	esac
+
+	PS1="${TITLEBAR}\u@\h:\w$WHITE\$(parse_git_info) $LIGHT_GRAY> "
+	PS2='> '
+	PS4='+ '
+}
+
+proml
+
