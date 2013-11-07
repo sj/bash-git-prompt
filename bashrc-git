@@ -1,6 +1,10 @@
 
 # Git branch in prompt
 function parse_git_info {
+	if [ ! -z  "$BASHRC_GIT_DISABLED" ]; then
+		return
+	fi
+
 	git_branch=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
 	if [ ! "$git_branch" = "" ]; then
 		if [ ! "$git_branch" = "(no branch)" ]; then
