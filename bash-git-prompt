@@ -1,0 +1,29 @@
+#!/bin/bash
+# bashrc-git control
+
+function brcg_disable(){
+	export BASHRC_GIT_DISABLED="1"
+}
+
+function brcg_enable(){
+	export BASHRC_GIT_ENABLED="1"
+}
+
+if [ -z "$BASHRC_GIT_INITIALISED" ]; then
+	echo "bashrc-git not installed or initialised. Please follow the installation instructions and edit ~/.bashrc accordingly." >& 2
+	exit 1
+fi
+
+case $1 in
+"disable"
+	brcg_disable();
+	;;
+"enable"
+	brcg_enable();
+	;;
+*)
+	echo "Unknown or missing command-line parameter" >& 2
+	usage()
+	;;
+esac
+
