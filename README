@@ -1,9 +1,14 @@
-Bashrc-git is a simple extension to Bash that shows useful information about
-the Git repository in your current directory.
+Bash-git-prompt is a simple extension to Bash that shows useful information at
+the prompt about the Git repository in your current directory.
 
-It consists of a single file (bashrc-git-include) which should be included in
-your $HOME/.bashrc file. Suppose bashrc-git is installed to
-/home/bas/bashrc-git, then edit /home/bas/.bashrc and add the following at the
-very end:
+It consists of a file (bashrc-include) which should be included in your
+$HOME/.bashrc file. Suppose bash-git-prompt is installed to
+/home/bas/bash-git-prompt, then edit /home/bas/.bashrc and add the following at
+the very end:
 
-source ~/bashrc-git/bashrc-git-include
+   source ~/bashrc-git/bash-git-prompt/bashrc-include
+
+
+You can use the 'bash-git-prompt' command to change the behaviour of
+bash-git-prompt. Just run it without parameters - it will inform you about the
+usage instructions.

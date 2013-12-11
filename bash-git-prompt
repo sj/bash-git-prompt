@@ -1,29 +1,52 @@
 #!/bin/bash
 # bashrc-git control
 
-function brcg_disable(){
-	export BASHRC_GIT_DISABLED="1"
+
+RUNDIR="/run/user/$UID/bash-git-prompt"
+INSTANCE_RUNDIR="/run/user/$UID/bash-git-prompt/instances/$BASH_GIT_PROMPT_PID"
+
+function bgp_disable(){
+	touch $INSTANCE_RUNDIR/disabled
 }
 
-function brcg_enable(){
-	export BASHRC_GIT_ENABLED="1"
+function bgp_enable(){
+	rm -f $INSTANCE_RUNDIR/disabled
 }
 
-if [ -z "$BASHRC_GIT_INITIALISED" ]; then
-	echo "bashrc-git not installed or initialised. Please follow the installation instructions and edit ~/.bashrc accordingly." >& 2
+function bgp_clear_cache(){
+	rm -rf $RUNDIR/cache/directories
+	rm -rf $RUNDIR/cache/repositories
+	cat <<HEREDOC
+Cache cleared. 
+If your current working directory is (part of) a Git repository on a slow
+medium (e.g.  NFS share), then it might take some time for bash-git-prompt to
+repopulate the cache for this repository.
+HEREDOC
+}
+
+function usage(){
+	echo "Usage: bash-git-prompt [command] [parameter(s)]"
+	echo ""
+	echo "Available commands:"
+	echo "  disable:     temporarily disables bash-git-prompt"
+	echo "  enable:      (re-)enables bash-git-prompt"
+	echo "  clear-cache: force wipe of cached information about Git repositories"
+}
+
+if [ -z "$BASH_GIT_PROMPT_PID" ]; then
+	echo "bash-git-prompt not installed or initialised. Please follow the installation instructions and edit ~/.bashrc accordingly." >& 2
 	exit 1
 fi
 
-case $1 in
-"disable"
-	brcg_disable();
-	;;
-"enable"
-	brcg_enable();
-	;;
-*)
-	echo "Unknown or missing command-line parameter" >& 2
-	usage()
+case "$1" in
+disable)	bgp_disable
+		;;
+enable)		bgp_enable
+		;;
+clear-cache)	bgp_clear_cache
+		;;
+*)	echo "Unknown or missing command-line parameter" >& 2
+	usage
 	;;
 esac
 

@@ -1,10 +1,102 @@
 
-# Git branch in prompt
-function parse_git_info {
-	if [ ! -z  "$BASHRC_GIT_DISABLED" ]; then
+function bgp_clean_instances(){
+	if [ ! -d "$RUNDIR/instances" ]; then
+		mkdir -p "$RUNDIR/instances"
+	fi
+
+	cd "$RUNDIR/instances" || return
+	bgp_log "Cleaning garbage from previous instances:"
+
+	ls | while read instance_pid; do
+		proc_cmdline="/proc/$instance_pid/cmdline"
+		if [ ! -r "$proc_cmdline" ] || [ "`cat $proc_cmdline | grep bash`" = "" ]; then
+			bgp_log "PID $instance_pid no longer active, cleaning up"
+			rm -rf "$RUNDIR/instances/$instance_pid"
+		else
+			bgp_log "PID $instance_pid currently active, not cleaning up"
+		fi
+	done	
+	
+	# Back to home dir
+	cd
+}
+	
+function bgp_log(){
+	echo "`date` -- $BASH_GIT_PROMPT_PID -- $@" >> /tmp/bash-git-prompt.log
+}
+
+function bgp_make_prompt_label() {
+	INSTANCE_RUNDIR="$RUNDIR/instances/$BASH_GIT_PROMPT_PID"
+
+	if [ -f "$INSTANCE_RUNDIR/disabled" ]; then
 		return
 	fi
 
+	currdir=`pwd`
+	currdir_hash=`bgp_hash "$currdir"`
+
+	repo_root=""
+	currdir_cache_file="$RUNDIR/cache/directories/$currdir_hash"
+	if [ ! -r "$currdir_cache_file" ]; then
+		bgp_log "no information known for '$currdir' ($currdir_cache_file does not exist)"
+
+		# No cache information known for current directory - create it.
+		mkdir -p "$RUNDIR/cache/directories"
+
+		repo_root=`git rev-parse --show-toplevel 2> /dev/null`
+		if [ "$repo_root" = "" ]; then
+			# Current pwd is not part of repository - construct empty file
+			bgp_log "current directory not part of Git repository"
+			touch "$currdir_cache_file"
+		else
+			bgp_log "current directory part of Git repository at '$repo_root', storing in cache"
+			echo "$repo_root" > "$currdir_cache_file"
+		fi
+	else
+		repo_root=`cat "$currdir_cache_file"`
+		if [ "$repo_root" = "" ]; then
+			bgp_log "information in cache about '$currdir': not part of Git repository"
+		else
+			bgp_log "information in cache about '$currdir': part of Git repository at '$repo_root'"
+		fi
+	fi
+	
+	if [ ! "$repo_root" = "" ]; then
+		# There is a repository root - query cache for more info
+		repo_root_hash=`bgp_hash "$repo_root"`
+		repo_cache_file="$RUNDIR/cache/repositories/$repo_root_hash"
+
+		history_git=`history | tail -n1 | grep "git commit\|git push\|git pull\|git mytest\|git fetch"`
+		history_last=`history | tail -n1`
+
+		bgp_log "last entry in Bash history: '$history_last'"
+		
+		force_git_refresh="no"
+		if [ ! "$history_git" = "" ]; then
+			bgp_log "forcing Git refresh because of recent history"
+			force_git_refresh="yes"
+		fi
+
+		if [ ! -r "$repo_cache_file" ] || [ "$force_git_refresh" = "yes" ]; then
+			# No cache available yet - construct from git
+			bgp_log "querying Git for information regarding repository '$repo_root'"
+
+			if [ ! -d "$RUNDIR/cache/repositories" ]; then
+				mkdir -p "$RUNDIR/cache/repositories"
+			fi
+
+			parsed_git_info="`parse_git_info`"
+			echo "$parsed_git_info" > "$repo_cache_file"
+			echo "$parsed_git_info"
+		else
+			# Read prompt from cache to speed things op
+			bgp_log "presenting cache information for repository at '$repo_root' in Bash prompt"
+			cat $repo_cache_file
+		fi
+	fi # else: current dir not part of Git repository
+}
+
+function parse_git_info(){
 	git_branch=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
 	if [ ! "$git_branch" = "" ]; then
 		if [ ! "$git_branch" = "(no branch)" ]; then
@@ -30,6 +122,10 @@ function parse_git_info {
 	fi
 }
 
+function bgp_hash(){
+	echo $@ | md5sum | awk '{print $1}'
+}
+
 function proml {
 	local        BLUE="\[\033[0;34m\]"
 	local         RED="\[\033[0;31m\]"
@@ -48,9 +144,21 @@ function proml {
 			;;
 	esac
 
-	PS1="${TITLEBAR}\u@\h:\w$WHITE\$(parse_git_info) $LIGHT_GRAY> "
+	#PS1="${TITLEBAR}\u@\h:\w$WHITE\$(parse_git_info) $LIGHT_GRAY> "
+	PS1="${TITLEBAR}\u@\h:\w$WHITE\$(bgp_make_prompt_label) $LIGHT_GRAY> "
 	PS2='> '
 	PS4='+ '
 }
+
+RUNDIR="/run/user/$UID/bash-git-prompt"
+
+if [ -z "$BASH_GIT_PROMPT_PID" ]; then
+	export BASH_GIT_PROMPT_PID="$BASHPID"
+	INSTANCE_RUNDIR="/run/user/$UID/bash-git-prompt/instances/$BASHPID"
+	
+	bgp_clean_instances
+	mkdir -p "$INSTANCE_RUNDIR" &> /dev/null
+
+fi
 
 proml
