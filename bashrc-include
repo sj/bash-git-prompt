@@ -1,7 +1,7 @@
 # vim: set filetype=bash
 
-SCRIPT_INSTALLDIR=`dirname "${BASH_SOURCE[0]}"`
-. "$SCRIPT_INSTALLDIR/bash-git-prompt-functions.sh"
+BGP_INSTALLDIR=`dirname "${BASH_SOURCE[0]}"`
+. "$BGP_INSTALLDIR/bash-git-prompt-functions.sh"
 
 function bgp_make_prompt_label() {
 	INSTANCE_RUNDIR="$RUNDIR/instances/$BASH_GIT_PROMPT_PID"
