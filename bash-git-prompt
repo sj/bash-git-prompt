@@ -5,6 +5,11 @@
 RUNDIR="/run/user/$UID/bash-git-prompt"
 INSTANCE_RUNDIR="/run/user/$UID/bash-git-prompt/instances/$BASH_GIT_PROMPT_PID"
 
+THIS_SCRIPT=`readlink "${BASH_SOURCE[0]}"`
+BGP_INSTALLDIR=`dirname "$THIS_SCRIPT"`
+. "$BGP_INSTALLDIR/bash-git-prompt-functions.sh"
+
+
 function bgp_disable(){
 	touch $INSTANCE_RUNDIR/disabled
 }
@@ -25,7 +30,19 @@ HEREDOC
 }
 
 function bgp_refresh(){
-	echo "Not implemented"
+	repo_root=`bgp_get_pwd_repository_root`
+	if [ ! "$repo_root" = "" ]; then
+		repo_root_hash=`bgp_hash "$repo_root"`
+		repo_cache_file="$RUNDIR/cache/repositories/$repo_root_hash"
+		if [ -w "$repo_cache_file" ]; then
+			rm "$repo_cache_file" && echo "Cache for repository '$repo_root' cleared - bash prompt should refresh automatically" || exit 1
+		else
+			echo "No cache entry found for repository '$repo_root' (or cache not writable) - unable to refresh." >& 2
+		fi
+	else 
+		echo "Can't find repository root - unable to refresh." >& 2
+		exit 1
+	fi
 }
 
 function usage(){
