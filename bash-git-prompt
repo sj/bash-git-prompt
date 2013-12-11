@@ -24,13 +24,18 @@ repopulate the cache for this repository.
 HEREDOC
 }
 
+function bgp_refresh(){
+	echo "Not implemented"
+}
+
 function usage(){
 	echo "Usage: bash-git-prompt [command] [parameter(s)]"
 	echo ""
 	echo "Available commands:"
 	echo "  disable:     temporarily disables bash-git-prompt"
 	echo "  enable:      (re-)enables bash-git-prompt"
-	echo "  clear-cache: force wipe of cached information about Git repositories"
+	echo "  clear-cache: force wipe of cached information about all Git repositories"
+	echo "  refresh:     refreshes the information on the current repository"
 }
 
 if [ -z "$BASH_GIT_PROMPT_PID" ]; then
@@ -44,6 +49,8 @@ disable)	bgp_disable
 enable)		bgp_enable
 		;;
 clear-cache)	bgp_clear_cache
+		;;
+refresh)	bgp_refresh
 		;;
 *)	echo "Unknown or missing command-line parameter" >& 2
 	usage
