@@ -43,7 +43,7 @@ function bgp_is_local_directory(){
 	dir="$1"
 	mountpoint=""
 	mountpoint_fs=""
-	for mountinfo in $(mount | grep ^/dev | sed "s/ on /|/g" | sed "s/ type /|/g" | sed "s/ (/|(/g"); do 
+	for mountinfo in $(mount | sed "s/ on /|/g" | sed "s/ type /|/g" | sed "s/ (/|(/g"); do 
 		this_mountdev=`echo $mountinfo | cut -d "|" -f 1`
 		this_mountpoint=`echo $mountinfo | cut -d "|" -f 2`
 		this_mountfstype=`echo $mountinfo | cut -d "|" -f 3`

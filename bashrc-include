@@ -12,7 +12,7 @@ function bgp_make_prompt_label() {
 
 	repo_root="`bgp_get_pwd_repository_root`"
 	
-	if [ ! "$repo_root" = "" ]; then
+	if [ ! "$repo_root" = "" ] && [ ! -f "$repo_root/.bash-git-prompt-ignore" ]; then
 		# There is a repository root - query cache for more info
 		repo_root_hash=`bgp_hash "$repo_root"`
 		repo_cache_file="$RUNDIR/cache/repositories/$repo_root_hash"
@@ -40,7 +40,7 @@ function bgp_make_prompt_label() {
 
 		if [ "$force_git_refresh" = "no" ]; then
 			# Check whether recent history contains a reason to refresh cache
-			history_git=`history | tail -n1 | grep "git commit\|git push\|git pull\|git mytest\|git fetch"`
+			history_git=`history | tail -n1 | grep "git commit\|git push\|git pull\|git mytest\|git fetch\|git checkout\|git merge\|git rebase"`
 			history_last=`history | tail -n1`
 
 			bgp_log "last entry in Bash history: '$history_last'"
@@ -67,7 +67,7 @@ function bgp_make_prompt_label() {
 			bgp_log "presenting cache information for repository at '$repo_root' in Bash prompt"
 			cat $repo_cache_file
 		fi
-	fi # else: current dir not part of Git repository
+	fi # else: current dir not part of Git repository, or should be ignored
 }
 
 function parse_git_info(){
