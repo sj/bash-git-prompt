@@ -5,7 +5,7 @@
 RUNDIR="/run/user/$UID/bash-git-prompt"
 INSTANCE_RUNDIR="/run/user/$UID/bash-git-prompt/instances/$BASH_GIT_PROMPT_PID"
 
-THIS_SCRIPT=`readlink "${BASH_SOURCE[0]}"`
+THIS_SCRIPT=`realpath "${BASH_SOURCE[0]}"`
 BGP_INSTALLDIR=`dirname "$THIS_SCRIPT"`
 . "$BGP_INSTALLDIR/bash-git-prompt-functions.sh"
 

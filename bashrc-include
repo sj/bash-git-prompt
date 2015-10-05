@@ -27,7 +27,7 @@ function bgp_make_prompt_label() {
 			now=`date +%s`
 			lastmod=`stat -c %Y "$repo_cache_file"`
 			age_secs=$((now-lastmod))
-			
+
 			if [ "$age_secs" -lt "30" ]; then
 				bgp_log "cache is only $age_secs seconds old - not refreshing"
 			elif [ "$repo_is_local" = "yes" ]; then
@@ -72,26 +72,44 @@ function bgp_make_prompt_label() {
 
 function parse_git_info(){
 	git_branch=`git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
+	git_current_sha=`git log -1 --format="%H"` # 'HEAD' doesn't always work
+
 	if [ ! "$git_branch" = "" ]; then
-		if [ ! "$git_branch" = "(no branch)" ]; then
-			if [ ! "`git for-each-ref --format='%(upstream:short)' $(git symbolic-ref -q HEAD)`" = "" ]; then
+		# Count number of local changes that do not feature upstream
+		# Branch names that start with '(' have no useful upstream. Usually they are things like '(detached from ABC)' or '(no branch)'	
+		if [ ! "${git_branch:0:1}" = "(" ]; then
+			if [ ! "`git for-each-ref --format='%(upstream:short)' $(git symbolic-ref -q $git_current_sha)`" = "" ]; then
 				# Local branch has upstream
 				git_num_commits_not_pushed=`git log --oneline @{upstream}.. | wc -l` 
-				if [ "$git_num_commits_not_pushed" -gt "0" ]; then
-					commits_not_pushed_str=" ↑$git_num_commits_not_pushed"
+				if [ "$git_num_commits_not_pushed" = "0" ]; then
+					git_num_commits_not_pushed=""
 				fi	
 			else
 				# Local branch does not have upstream
 				git_num_commits_not_pushed=`git show-branch "$git_branch" | wc -l`
-				if [ "$git_num_commits_not_pushed" -gt "0" ]; then
-					commits_not_pushed_str=" ↑$git_num_commits_not_pushed!"
+				if [ "$git_num_commits_not_pushed" = "0" ]; then
+					git_num_commits_not_pushed=""
 				fi	
 			fi
-			git_num_changes_uncommitted=`git status --porcelain | wc -l`
-			if [ "$git_num_changes_uncommitted" -gt "0" ]; then
-				num_changes_str=" ~$git_num_changes_uncommitted"
-			fi
-		fi # else: no branch info available (e.g. when rebasing)
+		else
+			# Detached or no branch (e.g. when rebasing)
+			git_num_commits_not_pushed="?"
+		fi
+
+		# Count number of file changes that haven't been committed yet 
+		git_num_changes_uncommitted=`git status --porcelain | wc -l`
+		if [ "$git_num_changes_uncommitted" = "0" ]; then
+			git_num_changes_uncommitted=""
+		fi
+
+		if [ ! "$git_num_changes_uncommitted" = "" ]; then
+			num_changes_str=" ~$git_num_changes_uncommitted"
+		fi
+
+		if [ ! "$git_num_commits_not_pushed" = "" ]; then
+			commits_not_pushed_str=" ↑$git_num_commits_not_pushed"
+		fi
+
 		echo " [$git_branch$commits_not_pushed_str$num_changes_str] "
 	fi
 }
